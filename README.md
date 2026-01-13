@@ -14,7 +14,7 @@ In this video series, you'll build a complete real-time order tracking backend w
 ## 🎯 Before You Start
 
 ### Prerequisites
-- [ ] Node.js installed (v14 or higher) - [Download](https://nodejs.org/)
+- [ ] Node.js installed (v18 or higher) - [Download](https://nodejs.org/)
 - [ ] Basic JavaScript knowledge
 - [ ] Text editor (VS Code recommended)
 - [ ] MongoDB Atlas account (free tier)
