@@ -132,7 +132,7 @@ connectDB().then(() => {
     console.log(`   GET  /health`);
     console.log(`   GET  /api/orders`);
     console.log(`   GET  /api/orders/:orderId`);
-    console.log('\n✨ Ready! Socket.IO will be added in upcoming videos...\n');
+    console.log('\n✨ Ready! time to explore Socket.IO \n');
   });
 }).catch(error => {
   console.error('❌ Failed to start server:', error);
