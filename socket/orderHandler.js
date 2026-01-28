@@ -1,5 +1,6 @@
+import { ReturnDocument } from "mongodb";
 import { getCollection } from "../config/database.js";
-import { calculateTotals, createOrderDocument, generateOrderId } from "../utils/helper.js";
+import { calculateTotals, createOrderDocument, generateOrderId, isValidStatusTransition } from "../utils/helper.js";
 
 export const orderHandler = (io, socket) =>{
     console.log("a user connected", socket.id);
@@ -102,6 +103,80 @@ export const orderHandler = (io, socket) =>{
         }catch(error){
             console.error('Get orders error', error)
             callback({success: false, message: error.message});
+        }
+    })
+
+    // admin event
+
+    //admin login
+    socket.on('adminLogin', async(data, callback)=>{
+        try{
+            if(data.password === process.env.ADMIN_PASSWORD){
+                socket.isAdmin = true;
+                socket.join("admins");
+                console.log(`admin logged in: ${socket.id}`)
+                callback({success: true});
+            }else{
+                callback({success: false, message: 'invalid password'});
+            }
+        }catch(error){
+            callback({success: false, message: "login failed"})
+        }
+    })
+
+    // get all orders
+    socket.on('getAllOrders', async(data, callback)=>{
+        try{
+            if(!socket.isAdmin){
+                return callback({success: false, message: "Unauthorized"})
+            }
+
+            const orderCollection = getCollection('orders');
+            const filter = data?.status ? {status: data.status} : {};
+            const orders = await orderCollection.find(filter).sort({createdAt: -1}).limit(20).toArray();
+
+            callback({succes: true, orders});
+
+        }catch(error){
+            callback({success: false, message: "failed to load orders"});
+        }
+    })
+
+    socket.on("updateOrderStatus", async(data, callback)=>{
+        try{
+            const orderCollection = getCollection('orders');
+            const order = await orderCollection.findOne({orderId: data.orderId})
+            if(!order){
+            return callback({success: false, message: 'Order not found'});
+            }
+            if(!isValidStatusTransition(order.status, data.newStatus)){
+                return callback({success: false, message: "Invalid status transition"})
+            }
+
+            const result = await orderCollection.findOneAndUpdate(
+                {orderId: data.orderId},
+                {
+                    $set: {status: data.newStatus, updatedAt: new Date()},
+                    $push:{
+                        statusHistory: {
+                            status: data.newStatus,
+                            timestamp: new Date(),
+                            by: socket.id,
+                            note: "Status updated by admin"
+                        }
+                    }
+                },
+                {returnDocument: 'after'}
+            )
+
+            io.to(`order-${data.orderId}`).emit('statusUpdated', {orderId: data.orderId, status: data.newStatus, order: result})
+
+            socket.to("admin").emit("orderStatusChanged", {orderId: data.orderId, newStatus: data.newStatus});
+
+            callback({success: true, order: result});
+
+        }catch(error){
+            callback({success: false, message: "failed to update order status"});
         }
     })
 }
