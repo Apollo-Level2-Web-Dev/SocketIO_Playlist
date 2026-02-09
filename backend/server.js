@@ -21,15 +21,15 @@ const server = http.createServer(app);
 
 
 const io = new Server(server,
-  { cors: { origin: "*" , methods: ["GET", "POST"] } }
+  { cors: { origin: "*", methods: ["GET", "POST"] } }
 );
 
 io.on("connection", (socket) => {
   console.log("a user connected", socket.id);
-  socket.emit("connected", {message: `User ${socket.id} connected`});
+  socket.emit("connected", { message: `User ${socket.id} connected` });
 
   //orderid 
-  console.log(generateOrderId())
+  // console.log(generateOrderId())
   // for handling the orders
   orderHandler(io, socket);
 });
@@ -61,16 +61,16 @@ app.get('/api/orders', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(20)
       .toArray();
-    
-    res.json({ 
-      success: true, 
-      count: orders.length, 
-      orders 
+
+    res.json({
+      success: true,
+      count: orders.length,
+      orders
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
+    res.status(500).json({
+      success: false,
+      message: error.message
     });
   }
 });
@@ -79,34 +79,34 @@ app.get('/api/orders', async (req, res) => {
 app.get('/api/orders/:orderId', async (req, res) => {
   try {
     const ordersCollection = getCollection('orders');
-    const order = await ordersCollection.findOne({ 
-      orderId: req.params.orderId 
+    const order = await ordersCollection.findOne({
+      orderId: req.params.orderId
     });
-    
+
     if (!order) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Order not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
       });
     }
-    
-    res.json({ 
-      success: true, 
-      order 
+
+    res.json({
+      success: true,
+      order
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
+    res.status(500).json({
+      success: false,
+      message: error.message
     });
   }
 });
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: 'Route not found' 
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
   });
 });
 
